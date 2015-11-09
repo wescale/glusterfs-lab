@@ -1,0 +1,6 @@
+*.iml
+*.iws
+.idea
+.vagrant
+Vagrantfile
+silo*
