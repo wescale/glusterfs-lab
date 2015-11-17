@@ -1,0 +1,8 @@
+[data-nodes]
+{% for host in keeper.self.data_nodes %}
+{{ host }}
+{% endfor %}
+
+[data-nodes:vars]
+ansible_ssh_user=cloud
+ansible_ssh_private_key_file='/home/cloud/.ssh/data-nodes.key.pem'

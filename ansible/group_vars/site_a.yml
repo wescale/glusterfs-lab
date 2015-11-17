@@ -1,0 +1,21 @@
+---
+keeper:
+  psk: B3causeJ313Uv0bi13t|<3jT3#$*%B1t<H
+  self:
+    ipv4: 84.39.33.211
+    subnet: 192.168.47.0/24
+    data_nodes:
+      - 192.168.47.10
+      - 192.168.47.11
+      - 192.168.47.12
+      - 192.168.47.13
+  sidekick:
+    ipv4: 84.39.36.56
+    subnet: 192.168.74.0/24
+    data_nodes:
+      - 192.168.74.10
+      - 192.168.74.11
+      - 192.168.74.12
+      - 192.168.74.13
+  data_nodes:
+    ssh_key: /Users/amaury/.ssh/amaury-ext-compute.pem

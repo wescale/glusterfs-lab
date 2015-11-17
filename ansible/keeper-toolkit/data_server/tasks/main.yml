@@ -1,0 +1,40 @@
+---
+- name: common aliases
+  copy:
+    dest=/etc/profile.d/ll.sh
+    content="alias ll=\"ls -aul\""
+    owner=root
+    group=root
+    mode=0644
+
+- name: default sh is bash
+  file:
+    src=/bin/bash
+    dest=/bin/sh
+    state=link
+
+- name: host is up-to-date
+  apt:
+    upgrade=full
+    update_cache=yes
+
+- name: ntpdate is absent
+  apt:
+    pkg=ntpdate
+    state=absent
+    purge=yes
+
+- name: ntp is present
+  apt:
+    pkg=ntp
+    state=present
+
+- name: ntp is configured
+  template: src=ntp-client.conf.j2 dest=/etc/ntp.conf
+  notify: restart ntp
+
+- name: ntp is enabled
+  service:
+    name=ntp
+    state=started
+    enabled=yes

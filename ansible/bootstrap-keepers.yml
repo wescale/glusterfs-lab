@@ -1,0 +1,56 @@
+- hosts: all
+  become: yes
+
+  roles:
+    - common
+    - keeper
+
+  tasks:
+    - name: copy ssh key for data cluster management
+      become: no
+      copy:
+        src="{{ keeper.data_nodes.ssh_key }}"
+        dest='/home/cloud/.ssh/data-nodes.key.pem'
+        mode=0600
+
+    - name: ansible playbook for data cluster management
+      become: no
+      copy:
+        src='./keeper-toolkit'
+        dest='/home/cloud/keeper-toolkit/'
+
+    - name: creating ansible etc dir
+      file:
+        path=/etc/ansible
+        state=directory
+        owner=root
+        group=root
+        mode=0755
+
+    - name: creating host inventory for data nodes
+      template:
+        src=hosts.j2
+        dest=/etc/ansible/hosts
+
+- hosts: site_a
+  become: yes
+
+  tasks:
+    - shell: systemctl daemon-reload && /usr/sbin/update-rc.d ipsec defaults && /usr/sbin/update-rc.d ipsec enable
+
+    - name: ipsec is up and ready
+      service:
+        name=ipsec
+        state=restarted
+
+- hosts: site_b
+  become: yes
+
+  tasks:
+    - shell: systemctl daemon-reload
+
+    - name: ipsec is up and ready
+      service:
+        name=ipsec
+        state=restarted
+        enabled=true

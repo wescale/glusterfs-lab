@@ -1,0 +1,23 @@
+# /etc/ipsec.conf - strongSwan IPsec configuration file
+
+config setup
+
+conn %default
+	ikelifetime=60m
+	keylife=20m
+	rekeymargin=3m
+	keyingtries=1
+	authby=secret
+	keyexchange=ikev2
+	mobike=no
+
+conn sidekick
+	left={{ keeper.sidekick.ipv4 }}
+	leftsubnet={{ keeper.sidekick.subnet }}
+	leftid=@{{ keeper.sidekick.ipv4 }}
+	leftfirewall=yes
+	right={{ ansible_default_ipv4.address }}
+	rightid=@{{ keeper.self.ipv4 }}
+	rightsubnet={{ keeper.self.subnet }}
+	rightfirewall=yes
+	auto=start

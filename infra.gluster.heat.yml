@@ -1,25 +1,48 @@
 #
 ##
-### @YesWeScale
+### Written by the CAT (Cloudwatt Automation Team)
 ##
 #
 heat_template_version: 2013-05-23
 
 
-description: Prod-like infrastructure setup for glusterfs
+description: GlusterFS Distributed Replicated Appliance
 
 
 parameters:
   keypair_name:
     description: Keypair to inject in instance
+    default: amaury-ext-compute
     label: SSH Keypair
     type: string
 
-  flavor_name:
-    default: s1.cw.small-1
-    description: Flavor to use for the deployed instance
+  datanode_flavor:
+    default: n2.cw.highmem-4
+    description: Flavor of the GlusterFS data nodes
     type: string
-    label: Instance Type (Flavor)
+    label: Gluster Nodes Flavor
+    constraints:
+      - allowed_values:
+          - s1.cw.small-1
+          - n1.cw.standard-1
+          - n1.cw.standard-2
+          - n1.cw.standard-4
+          - n1.cw.standard-8
+          - n1.cw.standard-12
+          - n1.cw.standard-16
+          - n2.cw.highmem-4
+
+  datanode_keypair:
+    description: Keypair to inject in datanoe
+    default: amaury-ext-compute
+    label: SSH Keypair
+    type: string
+
+  keeper_flavor:
+    default: s1.cw.small-1
+    description: Flavor of the Keeper server
+    type: string
+    label: Keeper Server Flavor
     constraints:
       - allowed_values:
           - s1.cw.small-1
@@ -30,34 +53,34 @@ parameters:
           - n1.cw.standard-12
           - n1.cw.standard-16
 
-  debian_jessie_image_id:
+  class_c_network_prefix:
+    default: 192.168.47
+    description: prefix of a class C cidr, less the ending .0/24
     type: string
-    default: 168f7c6b-20a6-4a4e-8052-d1200aa36a1e
+
+  site_b_cidr:
+    default: 192.168.74.0/24
+    description: prefix of a class C cidr, less the ending .0/24
+    type: string
 
 resources:
-  admin_network:
+  network:
     type: OS::Neutron::Net
 
-  data_network:
-    type: OS::Neutron::Net
-
-  admin_subnet:
+  subnet:
     type: OS::Neutron::Subnet
     properties:
-      network_id: { get_resource: admin_network }
+      network_id: { get_resource: network }
       ip_version: 4
-      cidr: 10.42.42.0/24
+      cidr: { "Fn::Join" : ["", [ {get_param: class_c_network_prefix},".0/24"]]}
+      host_routes:
+        - destination: { get_param: site_b_cidr }
+          nexthop: { "Fn::Join" : ["", [ {get_param: class_c_network_prefix},".254"]]}
+        - destination: 0.0.0.0/0
+          nexthop: { "Fn::Join" : ["", [ {get_param: class_c_network_prefix},".1"]]}
       allocation_pools:
-        - { start: 10.42.42.10, end: 10.42.42.199 }
-
-  data_subnet:
-    type: OS::Neutron::Subnet
-    properties:
-      network_id: { get_resource: data_network }
-      ip_version: 4
-      cidr: 10.1.1.0/24
-      allocation_pools:
-        - { start: 10.1.1.10, end: 10.1.1.199 }
+        - start: { "Fn::Join" : ["", [ {get_param: class_c_network_prefix},".10"]]}
+          end: { "Fn::Join" : ["", [ {get_param: class_c_network_prefix},".19"]]}
 
   router:
     type: OS::Neutron::Router
@@ -71,79 +94,114 @@ resources:
     type: OS::Neutron::RouterInterface
     properties:
       router_id: { get_resource : router }
-      subnet_id: { get_resource : data_subnet }
+      subnet_id: { get_resource : subnet }
 
-  admin_router_interface:
-    type: OS::Neutron::RouterInterface
-    properties:
-      router_id: { get_resource : router }
-      subnet_id: { get_resource : admin_subnet }
-
-  admin_security_group:
+  security_group:
     type: OS::Neutron::SecurityGroup
     properties:
       rules:
         - { direction: ingress, protocol: TCP, port_range_min: 22, port_range_max: 22 }
-
-  data_security_group:
-    type: OS::Neutron::SecurityGroup
-    properties:
-      rules:
-        - direction: ingress
-          remote_mode: remote_group_id
-          remote_group_id: { get_resource: admin_security_group }
-
-  admin_server_port:
-    type: OS::Neutron::Port
-    properties:
-      network_id: { get_resource: admin_network }
-      fixed_ips:
-        - { ip_address: 10.42.42.254, subnet_id: { get_resource: admin_subnet } }
-      security_groups: [{ get_resource: admin_security_group }]
-
-  admin_server:
-    type: OS::Nova::Server
-    properties:
-      key_name: { get_param: keypair_name }
-      image: 168f7c6b-20a6-4a4e-8052-d1200aa36a1e
-      flavor: { get_param: flavor_name }
-      networks:
-        - port: { get_resource: admin_server_port }
-
-  data_server_1:
-    type: OS::Nova::Server
-    properties:
-      key_name: { get_param: keypair_name }
-      image: 168f7c6b-20a6-4a4e-8052-d1200aa36a1e
-      flavor: { get_param: flavor_name }
-      networks:
-        - network: { get_resource: data_network }
-      security_groups:
-        - { get_resource: data_security_group }
-
-  data_server_2:
-    type: OS::Nova::Server
-    properties:
-      key_name: { get_param: keypair_name }
-      image: 168f7c6b-20a6-4a4e-8052-d1200aa36a1e
-      flavor: { get_param: flavor_name }
-      networks:
-        - network: { get_resource: data_network }
-      security_groups:
-        - { get_resource: data_security_group }
+        - { direction: ingress, protocol: UDP, port_range_min: 500, port_range_max: 500 }
+        - { direction: ingress, protocol: UDP, port_range_min: 4500, port_range_max: 4500 }
+        - { direction: ingress }
+        - { direction: egress }
 
   floating_ip:
     type: OS::Neutron::FloatingIP
     properties:
       floating_network_id: 6ea98324-0f14-49f6-97c0-885d1b8dc517
 
+  server_port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: network }
+      fixed_ips:
+        - ip_address: { "Fn::Join" : ["", [ {get_param: class_c_network_prefix},".254"]]}
+          subnet_id: { get_resource: subnet }
+      security_groups: [{ get_resource: security_group }]
+
+  keeper_init:
+    type: OS::Heat::MultipartMime
+    properties:
+      parts:
+      - config: { get_resource: ipsec_config }
+
+  ipsec_config:
+    type: OS::Heat::SoftwareConfig
+    properties:
+      config:
+        str_replace:
+          template: |
+            #!/bin/bash
+            echo "export LINKED_FLOATING_IP=$floating_ip$" >> /etc/profile.d/stack_vars.sh
+            route del -net $site_b$
+          params:
+            $floating_ip$: { get_attr: [floating_ip, floating_ip_address] }
+            $site_b$: { get_param: site_b_cidr }
+
+  keeper_server:
+    type: OS::Nova::Server
+    properties:
+      key_name: { get_param: keypair_name }
+      image: 168f7c6b-20a6-4a4e-8052-d1200aa36a1e
+      flavor: { get_param: keeper_flavor }
+      networks:
+        - port: { get_resource: server_port }
+      user_data_format: RAW
+      user_data:
+        get_resource: keeper_init
+
+  datanode1:
+    type: OS::Nova::Server
+    properties:
+      key_name: { get_param: datanode_keypair }
+      image: 168f7c6b-20a6-4a4e-8052-d1200aa36a1e
+      flavor: { get_param: datanode_flavor }
+      networks:
+        - network: { get_resource: network }
+      security_groups:
+        - { get_resource: security_group }
+
+  datanode2:
+    type: OS::Nova::Server
+    properties:
+      key_name: { get_param: datanode_keypair }
+      image: 168f7c6b-20a6-4a4e-8052-d1200aa36a1e
+      flavor: { get_param: datanode_flavor }
+      networks:
+        - network: { get_resource: network }
+      security_groups:
+        - { get_resource: security_group }
+
+  datanode3:
+    type: OS::Nova::Server
+    properties:
+      key_name: { get_param: datanode_keypair }
+      image: 168f7c6b-20a6-4a4e-8052-d1200aa36a1e
+      flavor: { get_param: datanode_flavor }
+      networks:
+        - network: { get_resource: network }
+      security_groups:
+        - { get_resource: security_group }
+
+  datanode4:
+    type: OS::Nova::Server
+    properties:
+      key_name: { get_param: datanode_keypair }
+      image: 168f7c6b-20a6-4a4e-8052-d1200aa36a1e
+      flavor: { get_param: datanode_flavor }
+      networks:
+        - network: { get_resource: network }
+      security_groups:
+        - { get_resource: security_group }
+
   floating_ip_link:
     type: OS::Nova::FloatingIPAssociation
     properties:
       floating_ip: { get_resource: floating_ip }
-      server_id: { get_resource: admin_server }
+      server_id: { get_resource: keeper_server }
 
 outputs:
   floating_ip:
-    description: Admin zone entry point
+    description: Keeper public IP address
     value: { get_attr: [floating_ip, floating_ip_address] }

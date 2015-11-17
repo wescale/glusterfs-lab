@@ -15,11 +15,41 @@
         owner=root
         group=root
         mode=0644
+      tags: init
 
     - name: default sh is bash
       file: src=/bin/bash dest=/bin/sh state=link
+      tags: init
 
     - name: host is up-to-date
       apt:
         upgrade=full
         update_cache=yes
+      tags: init
+
+    - name: make yourself at home
+      apt: pkg={{ item }} state=present
+      with_items:
+        - emacs
+        - vim
+        - tmux
+      tags: init
+
+    - name: ansible installed
+      pip: name=ansible state=latest
+      tags: init
+
+    - name: copy ssh key for data cluster management
+      become: no
+      copy:
+        src='~/.ssh/amaury-ext-compute.pem'
+        dest='/home/cloud/.ssh/data-server.key.pem'
+        mode=0600
+      tags: init
+
+    - name: ansible playbook for data cluster management
+      become: no
+      copy:
+        src='./'
+        dest='/home/cloud/gluster/'
+      tags: update

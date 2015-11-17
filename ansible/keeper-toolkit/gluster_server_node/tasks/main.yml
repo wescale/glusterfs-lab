@@ -1,0 +1,44 @@
+---
+- name: gluster repositories key trusted
+  apt_key:
+    url='http://download.gluster.org/pub/gluster/glusterfs/3.6/3.6.6/Debian/jessie/pub.key'
+    state=present
+
+- name: gluster repositories listed
+  apt_repository:
+    repo='deb http://download.gluster.org/pub/gluster/glusterfs/3.6/3.6.6/Debian/jessie/apt jessie main'
+    state=present
+    update_cache=yes
+
+- name: gluster is installed
+  apt:
+    name={{ item }}
+    state=present
+  with_items:
+    - glusterfs-server
+
+- name: gluster service up and running
+  service:
+    name=glusterfs-server
+    state=started
+    enabled=yes
+
+- name: gluster brick directory exists
+  file:
+    path={{ item.brick_dir }}
+    state=directory
+    mode=0775
+  with_items: "{{ gluster_server_node.volumes }}"
+
+- name: gluster volume configured
+  gluster_volume:
+    name="{{ item.name }}"
+    brick="{{ item.brick_dir }}"
+    replicas="{{ item.replicas }}"
+    cluster="{{ groups.gluster | join(',') }}"
+    host="{{ inventory_hostname }}"
+    options="{{ item.options }}"
+    state=present
+    force=yes
+  with_items: "{{ gluster_server_node.volumes }}"
+  run_once: true
