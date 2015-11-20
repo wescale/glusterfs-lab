@@ -30,8 +30,17 @@
 
     - name: creating host inventory for data nodes
       template:
-        src=hosts.j2
-        dest=/etc/ansible/hosts
+        src='templates/hosts.j2'
+        dest='/etc/ansible/hosts'
+      tags: push
+
+    - name: generate ssh config for the data nodes
+      template:
+        src='templates/ssh_config.j2'
+        dest='/home/cloud/keeper-toolkit/data_nodes_ssh_config'
+        owner=cloud
+        group=cloud
+        mode=0600
       tags: push
 
 - hosts: site_a

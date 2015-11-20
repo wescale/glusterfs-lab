@@ -22,6 +22,9 @@
     - common
     - gluster_client_node
 
+  vars:
+    georep_key_path: '/home/cloud/.ssh/id_rsa_georep'
+
   tasks:
     - name: gluster volume mounted
       mount:
@@ -32,3 +35,34 @@
         state=mounted
       with_items: "{{ gluster_server_node.volumes }}"
       tags: client
+
+    - name: ssh key for georeplication
+      shell: ssh-keygen -N '' -f {{ georep_key_path }} && chown cloud:cloud -R {{ georep_key_path }}*
+        creates="{{ georep_key_path }}"
+      tags: georep
+
+- hosts: data_nodes
+  become: yes
+
+  vars:
+    georep_key_path: '/home/cloud/.ssh/id_rsa_georep'
+
+  tasks:
+    - name: key upload
+      copy:
+        src="{{ georep_key_path }}"
+        dest="/root/.ssh/id_rsa_georep"
+        owner=root
+        group=root
+        mode=0600
+      tags: georep
+
+    - name: ssh config upload
+      copy:
+        src='/home/cloud/keeper-toolkit/data_nodes_ssh_config'
+        dest='/root/.ssh/config'
+        owner=root
+        group=root
+        mode=0600
+      tags: georep
+
