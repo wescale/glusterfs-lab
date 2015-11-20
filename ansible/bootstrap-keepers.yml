@@ -17,7 +17,8 @@
       become: no
       copy:
         src='./keeper-toolkit'
-        dest='/home/cloud/keeper-toolkit/'
+        dest='/home/cloud/'
+      tags: push
 
     - name: creating ansible etc dir
       file:
@@ -31,12 +32,14 @@
       template:
         src=hosts.j2
         dest=/etc/ansible/hosts
+      tags: push
 
 - hosts: site_a
   become: yes
 
   tasks:
-    - shell: systemctl daemon-reload && /usr/sbin/update-rc.d ipsec defaults && /usr/sbin/update-rc.d ipsec enable
+    - name: old-school enabling ipsec service
+      shell: systemctl daemon-reload && /usr/sbin/update-rc.d ipsec defaults && /usr/sbin/update-rc.d ipsec enable
 
     - name: ipsec is up and ready
       service:
@@ -47,10 +50,10 @@
   become: yes
 
   tasks:
-    - shell: systemctl daemon-reload
+    - name: old-school enabling ipsec service
+      shell: systemctl daemon-reload && /usr/sbin/update-rc.d ipsec defaults && /usr/sbin/update-rc.d ipsec enable
 
     - name: ipsec is up and ready
       service:
         name=ipsec
         state=restarted
-        enabled=true

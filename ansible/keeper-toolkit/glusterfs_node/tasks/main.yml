@@ -16,6 +16,7 @@
     state=present
   with_items:
     - glusterfs-server
+    - glusterfs-client
 
 - name: gluster service up and running
   service:
@@ -30,14 +31,15 @@
     mode=0775
   with_items: "{{ gluster_server_node.volumes }}"
 
+- debug: msg="{{ groups.data_nodes | join(',') }}"
 - name: gluster volume configured
   gluster_volume:
     name="{{ item.name }}"
     brick="{{ item.brick_dir }}"
     replicas="{{ item.replicas }}"
-    cluster="{{ groups.gluster | join(',') }}"
-    host="{{ inventory_hostname }}"
+    cluster="{{ groups.data_nodes | join(',')}}"
     options="{{ item.options }}"
+    host="{{ inventory_hostname }}"
     state=present
     force=yes
   with_items: "{{ gluster_server_node.volumes }}"

@@ -1,8 +1,11 @@
-[data-nodes]
+[local]
+127.0.0.1 ansible_connection=local
+
+[data_nodes]
 {% for host in keeper.self.data_nodes %}
 {{ host }}
 {% endfor %}
 
-[data-nodes:vars]
+[data_nodes:vars]
 ansible_ssh_user=cloud
 ansible_ssh_private_key_file='/home/cloud/.ssh/data-nodes.key.pem'

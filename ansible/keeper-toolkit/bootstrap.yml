@@ -4,30 +4,29 @@
 ### @YesWeScale
 ##
 #
-- hosts: gluster
+- hosts: data_nodes
   become: yes
 
   roles:
-    - data_server
-    - gluster_server_node
-
-
+    - common
+    - glusterfs_node
+#
+##
+### Client configuration
+##
+#
 - hosts: local
   become: yes
 
   roles:
-    - data_server
+    - common
     - gluster_client_node
 
   tasks:
-    - debug: var={{item}}
-      with_items: "{{ gluster_server_node.volumes }}"
-      tags: client
-
     - name: gluster volume mounted
       mount:
         name="/mnt/{{ item.name }}"
-        src="{{ groups['gluster'][0] }}:{{ item.name }}"
+        src="{{ groups['data_nodes'][0] }}:{{ item.name }}"
         fstype=glusterfs
         opts="defaults,_netdev"
         state=mounted
