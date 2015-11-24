@@ -33,7 +33,7 @@ parameters:
           - n2.cw.highmem-4
 
   datanode_keypair:
-    description: Keypair to inject in datanoe
+    description: Keypair to inject in datanode
     default: amaury-ext-compute
     label: SSH Keypair
     type: string

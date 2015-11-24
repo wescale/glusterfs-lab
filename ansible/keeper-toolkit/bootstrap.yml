@@ -66,3 +66,9 @@
         mode=0600
       tags: georep
 
+    - name: workaround for faulty path generation
+      file:
+        src=/usr/lib/x86_64-linux-gnu
+        dest=/usr/libexec
+        state=link
+

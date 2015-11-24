@@ -1,2 +1,0 @@
-[admin]
-84.39.36.56 ansible_ssh_user=cloud ansible_ssh_private_key_file=/Users/amaury/.ssh/amaury-ext-compute.pem

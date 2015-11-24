@@ -16,8 +16,3 @@
       copy:
         src='./id_rsa_georep.pub'
         dest='/home/cloud/keeper-toolkit/'
-
-    - name: inject public key from site A into site B
-      copy:
-        src='/home/cloud/keeper-toolkit/data_nodes_ssh_config'
-        dest='/home/cloud/keeper-toolkit/'
