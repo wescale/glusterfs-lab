@@ -1,0 +1,15 @@
+- hosts: upstream
+  become: yes
+
+  tasks:
+    - apt: pkg=glusterfs-client state=present
+
+    - name: gluster volume mounted
+      mount:
+        name="/mnt/{{ item.name }}"
+        src="{{ groups['data_nodes'][0] }}:{{ item.name }}"
+        fstype=glusterfs
+        opts="defaults,_netdev"
+        state=mounted
+      with_items: "{{ gluster_server_node.volumes }}"
+      tags: client

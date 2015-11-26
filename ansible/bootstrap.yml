@@ -1,0 +1,97 @@
+- hosts: all
+  tasks:
+    - name: touch all server to gather facts
+      file: path='/tmp/.god_finger' state=touch
+
+- hosts: keepers
+  become: yes
+  tasks:
+    - name: packages installed
+      apt: pkg=aptitude state=present
+      tags: init
+
+    - name: apt-get update & upgrade
+      apt: update_cache=yes upgrade=full
+      tags: init
+
+- hosts: data_nodes
+  become: yes
+  tasks:
+    - name: packages installed
+      apt: pkg=aptitude state=present
+      tags: init
+
+    - name: apt-get update & upgrade
+      apt: update_cache=yes upgrade=full
+      tags: init
+
+- hosts: keepers
+  become: yes
+  roles:
+    - keeper
+
+- hosts: upstream
+  become: yes
+  tasks:
+    - name: old-school enabling ipsec service
+      shell: systemctl daemon-reload && /usr/sbin/update-rc.d ipsec defaults && /usr/sbin/update-rc.d ipsec enable
+
+    - name: ipsec is up and ready
+      service:
+        name=ipsec
+        state=restarted
+
+- hosts: downstream
+  become: yes
+  tasks:
+    - name: old-school enabling ipsec service
+      shell: systemctl daemon-reload && /usr/sbin/update-rc.d ipsec defaults && /usr/sbin/update-rc.d ipsec enable
+
+    - name: ipsec is up and ready
+      service:
+        name=ipsec
+        state=restarted
+
+- hosts: data_nodes
+  become: yes
+  roles:
+    - data_node
+
+- hosts: local
+  become: no
+  vars:
+    georep_key_path: "{{ lookup('env','HOME') }}/.ssh/id_rsa_georep"
+  tasks:
+    - name: ssh key for georeplication
+      shell: ssh-keygen -N '' -f {{ georep_key_path }}
+        creates="{{ georep_key_path }}"
+
+- hosts: upstream_data_nodes
+  become: yes
+  vars:
+    georep_key_path: "{{ lookup('env','HOME') }}/.ssh/id_rsa_georep"
+  tasks:
+    - name: key upload
+      copy:
+        src="{{ georep_key_path }}"
+        dest="/root/.ssh/id_rsa_georep"
+        owner=root
+        group=root
+        mode=0600
+
+    - name: generate ssh config for the data nodes
+      template:
+        src='templates/ssh_config.j2'
+        dest='/root/.ssh/config'
+        owner=root
+        group=root
+        mode=0600
+
+- hosts: downstream_data_nodes
+  become: yes
+  vars:
+    georep_pub_key_path: "{{ lookup('env','HOME') }}/.ssh/id_rsa_georep.pub"
+  tasks:
+    - authorized_key:
+        user=root
+        key="{{ lookup('file', georep_pub_key_path) }}"

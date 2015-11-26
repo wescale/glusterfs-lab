@@ -1,9 +1,0 @@
----
-gluster_server_node:
-  volumes:
-    - name: 'volume_one'
-      brick_dir: '/srv/gfsbrick-volume_one'
-      replicas: 2
-      options:
-        performance:
-          cache-size: '1MB'

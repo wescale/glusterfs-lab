@@ -1,17 +1,28 @@
-[site_a]
-84.39.38.148 ansible_ssh_user=cloud ansible_ssh_private_key_file=/Users/amaury/.ssh/amaury-ext-compute.pem
+[local]
+127.0.0.1 ansible_connection=local
 
-[slaves_a]
+[upstream]
+84.39.39.71
+
+[upstream_data_nodes]
 192.168.47.10
 192.168.47.11
 192.168.47.12
 192.168.47.13
 
-[site_b]
-84.39.33.194 ansible_ssh_user=cloud ansible_ssh_private_key_file=/Users/amaury/.ssh/amaury-ext-compute.pem
+[downstream]
+84.39.39.89
 
-[slaves_b]
+[downstream_data_nodes]
 192.168.74.10
 192.168.74.11
 192.168.74.12
 192.168.74.13
+
+[keepers:children]
+upstream
+downstream
+
+[data_nodes:children]
+upstream_data_nodes
+downstream_data_nodes

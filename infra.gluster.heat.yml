@@ -17,7 +17,7 @@ parameters:
     type: string
 
   datanode_flavor:
-    default: n2.cw.highmem-4
+    default: n2.cw.highmem-2
     description: Flavor of the GlusterFS data nodes
     type: string
     label: Gluster Nodes Flavor
@@ -30,7 +30,7 @@ parameters:
           - n1.cw.standard-8
           - n1.cw.standard-12
           - n1.cw.standard-16
-          - n2.cw.highmem-4
+          - n2.cw.highmem-2
 
   datanode_keypair:
     description: Keypair to inject in datanode
@@ -39,7 +39,7 @@ parameters:
     type: string
 
   keeper_flavor:
-    default: s1.cw.small-1
+    default: n2.cw.highmem-2
     description: Flavor of the Keeper server
     type: string
     label: Keeper Server Flavor
@@ -52,6 +52,7 @@ parameters:
           - n1.cw.standard-8
           - n1.cw.standard-12
           - n1.cw.standard-16
+          - n2.cw.highmem-2
 
   class_c_network_prefix:
     default: 192.168.47

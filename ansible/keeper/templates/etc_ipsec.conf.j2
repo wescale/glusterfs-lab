@@ -12,12 +12,12 @@ conn %default
 	mobike=no
 
 conn sidekick
-	left={{ keeper.sidekick.ipv4 }}
-	leftsubnet={{ keeper.sidekick.subnet }}
-	leftid=@{{ keeper.sidekick.ipv4 }}
+	left={{ tunnel_partner_ip }}
+	leftsubnet={{ tunnel_cidr }}
+	leftid=@{{ tunnel_partner_ip }}
 	leftfirewall=yes
 	right={{ ansible_default_ipv4.address }}
-	rightid=@{{ keeper.self.ipv4 }}
-	rightsubnet={{ keeper.self.subnet }}
+	rightid=@{{ inventory_hostname }}
+	rightsubnet={{ my_cidr }}
 	rightfirewall=yes
 	auto=start

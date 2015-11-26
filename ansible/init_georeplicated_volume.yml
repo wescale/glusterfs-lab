@@ -1,0 +1,62 @@
+- hosts: upstream_data_nodes
+  become: yes
+  tasks:
+    - name: gluster brick directory exists
+      file:
+        path={{ item.brick_dir }}
+        state=directory
+        mode=0775
+      with_items: "{{ gluster_server_node.volumes }}"
+
+    - name: gluster volume configured
+      gluster_volume:
+        name="{{ item.name }}"
+        brick="{{ item.brick_dir }}"
+        replicas="{{ item.replicas }}"
+        cluster="{{ groups.upstream_data_nodes | join(',')}}"
+        options="{{ item.options }}"
+        host="{{ inventory_hostname }}"
+        state=present
+        force=yes
+      with_items: "{{ gluster_server_node.volumes }}"
+      run_once: true
+
+- hosts: downstream_data_nodes
+  become: yes
+  tasks:
+    - name: gluster brick directory exists
+      file:
+        path={{ item.brick_dir }}
+        state=directory
+        mode=0775
+      with_items: "{{ gluster_server_node.volumes }}"
+
+    - name: gluster volume configured
+      gluster_volume:
+        name="{{ item.name }}"
+        brick="{{ item.brick_dir }}"
+        replicas="{{ item.replicas }}"
+        cluster="{{ groups.downstream_data_nodes | join(',')}}"
+        options="{{ item.options }}"
+        host="{{ inventory_hostname }}"
+        state=present
+        force=yes
+      with_items: "{{ gluster_server_node.volumes }}"
+      run_once: true
+
+- hosts: upstream_data_nodes
+  become: yes
+  tasks:
+    - name: grsec created
+      shell: "gluster system:: execute gsec_create"
+      run_once: true
+
+    - name: pushing pem to downstream volume
+      shell: "gluster volume geo-replication {{ item.name }} {{ groups.downstream_data_nodes[0] }}::{{ item.name }} create push-pem"
+      with_items: "{{ gluster_server_node.volumes }}"
+      run_once: true
+
+    - name: starting georeplication session
+      shell: "gluster volume geo-replication {{ item.name }} {{ groups.downstream_data_nodes[0] }}::{{ item.name }} start"
+      with_items: "{{ gluster_server_node.volumes }}"
+      run_once: true

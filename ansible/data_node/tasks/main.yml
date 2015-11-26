@@ -1,0 +1,21 @@
+---
+- name: gluster is installed
+  apt:
+    name={{ item }}
+    state=present
+  with_items:
+    - glusterfs-server
+    - glusterfs-client
+  tags: init
+
+- name: gluster service up and running
+  service:
+    name=glusterfs-server
+    state=started
+    enabled=yes
+
+- name: workaround for faulty path generation
+  file:
+    src=/usr/lib/x86_64-linux-gnu
+    dest=/usr/libexec
+    state=link

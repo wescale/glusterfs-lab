@@ -1,8 +1,0 @@
-- hosts: data_nodes
-  become: yes
-
-  tasks:
-    - name: inject upstream site key for allowing georep
-      authorized_key:
-        user=root
-        key="{{ lookup('file', '/home/cloud/keeper-toolkit/id_rsa_georep.pub') }}"
