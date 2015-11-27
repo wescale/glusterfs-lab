@@ -11,5 +11,5 @@
         fstype=glusterfs
         opts="defaults,_netdev"
         state=mounted
-      with_items: "{{ gluster_server_node.volumes }}"
+      with_items: "{{ gluster_volumes }}"
       tags: client

@@ -1,4 +1,0 @@
----
-tunnel_partner_ip: 84.39.39.89
-tunnel_cidr: 192.168.74.0/24
-my_cidr: 192.168.47.0/24

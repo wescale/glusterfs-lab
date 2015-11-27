@@ -1,13 +1,11 @@
 #
 ##
-### Written by the CAT (Cloudwatt Automation Team)
+### by @aurelienmaury for @YesWeScale
 ##
 #
 heat_template_version: 2013-05-23
 
-
-description: GlusterFS Distributed Replicated Appliance
-
+description: GlusterFS Distributed Replicated Cluster
 
 parameters:
   keypair_name:
@@ -54,12 +52,12 @@ parameters:
           - n1.cw.standard-16
           - n2.cw.highmem-2
 
-  class_c_network_prefix:
+  subnet_prefix:
     default: 192.168.47
     description: prefix of a class C cidr, less the ending .0/24
     type: string
 
-  site_b_cidr:
+  partner_site_cidr:
     default: 192.168.74.0/24
     description: prefix of a class C cidr, less the ending .0/24
     type: string
@@ -73,15 +71,15 @@ resources:
     properties:
       network_id: { get_resource: network }
       ip_version: 4
-      cidr: { "Fn::Join" : ["", [ {get_param: class_c_network_prefix},".0/24"]]}
+      cidr: { "Fn::Join" : ["", [ {get_param: subnet_prefix},".0/24"]]}
       host_routes:
-        - destination: { get_param: site_b_cidr }
-          nexthop: { "Fn::Join" : ["", [ {get_param: class_c_network_prefix},".254"]]}
+        - destination: { get_param: partner_site_cidr }
+          nexthop: { "Fn::Join" : ["", [ {get_param: subnet_prefix},".254"]]}
         - destination: 0.0.0.0/0
-          nexthop: { "Fn::Join" : ["", [ {get_param: class_c_network_prefix},".1"]]}
+          nexthop: { "Fn::Join" : ["", [ {get_param: subnet_prefix},".1"]]}
       allocation_pools:
-        - start: { "Fn::Join" : ["", [ {get_param: class_c_network_prefix},".10"]]}
-          end: { "Fn::Join" : ["", [ {get_param: class_c_network_prefix},".19"]]}
+        - start: { "Fn::Join" : ["", [ {get_param: subnet_prefix},".10"]]}
+          end: { "Fn::Join" : ["", [ {get_param: subnet_prefix},".19"]]}
 
   router:
     type: OS::Neutron::Router
@@ -117,7 +115,7 @@ resources:
     properties:
       network_id: { get_resource: network }
       fixed_ips:
-        - ip_address: { "Fn::Join" : ["", [ {get_param: class_c_network_prefix},".254"]]}
+        - ip_address: { "Fn::Join" : ["", [ {get_param: subnet_prefix},".254"]]}
           subnet_id: { get_resource: subnet }
       security_groups: [{ get_resource: security_group }]
 
@@ -138,7 +136,7 @@ resources:
             route del -net $site_b$
           params:
             $floating_ip$: { get_attr: [floating_ip, floating_ip_address] }
-            $site_b$: { get_param: site_b_cidr }
+            $site_b$: { get_param: partner_site_cidr }
 
   keeper_server:
     type: OS::Nova::Server

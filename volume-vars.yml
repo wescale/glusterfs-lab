@@ -1,0 +1,7 @@
+---
+gluster_volumes:
+  - name: 'data'
+    brick_dir: '/srv/brick/data/brick1'
+    replicas: 2
+    options:
+      "performance.cache-size": '500MB'

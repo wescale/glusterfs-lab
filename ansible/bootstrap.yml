@@ -1,20 +1,5 @@
-- hosts: all
-  tasks:
-    - name: touch all server to gather facts
-      file: path='/tmp/.god_finger' state=touch
-
-- hosts: keepers
-  become: yes
-  tasks:
-    - name: packages installed
-      apt: pkg=aptitude state=present
-      tags: init
-
-    - name: apt-get update & upgrade
-      apt: update_cache=yes upgrade=full
-      tags: init
-
-- hosts: data_nodes
+---
+- hosts: all_except_local
   become: yes
   tasks:
     - name: packages installed
@@ -29,20 +14,6 @@
   become: yes
   roles:
     - keeper
-
-- hosts: upstream
-  become: yes
-  tasks:
-    - name: old-school enabling ipsec service
-      shell: systemctl daemon-reload && /usr/sbin/update-rc.d ipsec defaults && /usr/sbin/update-rc.d ipsec enable
-
-    - name: ipsec is up and ready
-      service:
-        name=ipsec
-        state=restarted
-
-- hosts: downstream
-  become: yes
   tasks:
     - name: old-school enabling ipsec service
       shell: systemctl daemon-reload && /usr/sbin/update-rc.d ipsec defaults && /usr/sbin/update-rc.d ipsec enable
