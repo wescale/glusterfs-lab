@@ -1,4 +1,4 @@
-- hosts: upstream
+- hosts: upstream_keeper
   become: yes
 
   tasks:

@@ -1,8 +1,6 @@
 [local]
 127.0.0.1 ansible_connection=local
 
-
-
 [upstream_keeper]
 84.39.39.71
 
@@ -21,8 +19,6 @@ tunnel_partner_ip='84.39.39.89'
 tunnel_cidr='192.168.74.0/24'
 my_cidr='192.168.47.0/24'
 
-
-
 [downstream_keeper]
 84.39.39.89
 
@@ -40,8 +36,6 @@ downstream_data_nodes
 tunnel_partner_ip='84.39.39.71'
 tunnel_cidr='192.168.47.0/24'
 my_cidr='192.168.74.0/24'
-
-
 
 [keepers:children]
 upstream_keeper
