@@ -42,7 +42,7 @@ upstream_keeper
 downstream_keeper
 
 [keepers:vars]
-keepers_psk='B3causeJ313Uv0bi13t|<3jT3#$*%B1t<H'
+ipsec_psk='B3causeJ313Uv0bi13t|<3jT3#$*%B1t<H'
 
 [data_nodes:children]
 upstream_data_nodes
